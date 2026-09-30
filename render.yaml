@@ -1,0 +1,25 @@
+# Paid service and disk. Review Render's cost before creating the Blueprint.
+services:
+  - type: web
+    name: powerlink-shortener
+    runtime: node
+    plan: 0.5c-512mb
+    region: singapore
+    numInstances: 1
+    autoDeployTrigger: off
+    buildCommand: npm ci --include=dev && npm run lint && npm test && npm run build
+    startCommand: npm start -- --hostname 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    disk:
+      name: powerlink-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: NODE_ENV
+        value: production
+      - key: LINK_DATA_DIR
+        value: /var/data/links
+      - key: CREATE_ACCESS_TOKEN
+        generateValue: true
