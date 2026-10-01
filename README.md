@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. For a production build, set a private `CREATE_ACCESS_TOKEN`, then use `npm run build` followed by `npm start`. Production link creation rejects requests without this owner key.
+Open http://localhost:3000. Local development stores links as files under `.data/links/` unless you set `DATABASE_URL`. For a production build, set a private `CREATE_ACCESS_TOKEN`, then use `npm run build` followed by `npm start`. Production link creation rejects requests without this owner key.
 
 ## Features
 
@@ -27,11 +27,16 @@ Account buttons were removed because the original project had no authentication 
 
 ## Data and deployment
 
-Links are stored in `.data/links/` by default (ignored by Git). Set `LINK_DATA_DIR` to an absolute persistent directory if needed. Back up this directory; do not delete it during cleanup. Link passwords are never included in API responses or browser history.
+Storage is selected by `DATABASE_URL`:
 
-This storage design supports a single persistent Node.js host. Ephemeral/serverless or multi-instance deployments need a shared database before deployment. Production creation requires an owner access key; password attempts and creation requests have in-memory rate limits. Public multi-user creation needs account management and durable quotas. Serve over HTTPS.
+- **With `DATABASE_URL`** (production): links are stored in Postgres. The `links` table is created automatically on first use. Use a free managed provider such as Neon or Supabase; set the connection string as an environment variable, never in Git.
+- **Without `DATABASE_URL`** (development/tests): links are stored as files in `.data/links/` (ignored by Git). Set `LINK_DATA_DIR` to change the directory. This path is ephemeral on diskless hosts, so production must set `DATABASE_URL`.
 
-The included `render.yaml` prepares a paid Render service with persistent storage. Follow [DEPLOYMENT.md](DEPLOYMENT.md) for setup, cost review, and verification.
+Optional Postgres tuning: `DATABASE_SSL_REJECT_UNAUTHORIZED=false` disables certificate verification for providers that need it (default verifies), and `DATABASE_POOL_MAX` sets the pool size (default 5).
+
+Link passwords are never included in API responses or browser history. Production creation requires an owner access key; password attempts and creation requests have in-memory rate limits per instance. Public multi-user creation needs account management and durable quotas. Serve over HTTPS.
+
+The included `render.yaml` prepares a **free** Render web service backed by an external Postgres database (no persistent disk). Follow [DEPLOYMENT.md](DEPLOYMENT.md) for setup and verification.
 
 Localhost links work only on the local device. Share links from your own deployed domain. No external short-link domain is assumed. QR codes contain the short URL, not the protected destination. Browser history is private to the browser profile; removing a history entry does not revoke a link.
 
