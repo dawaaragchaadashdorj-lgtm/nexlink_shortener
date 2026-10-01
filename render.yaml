@@ -10,10 +10,6 @@ services:
     buildCommand: npm ci --include=dev && npm run lint && npm test && npm run build
     startCommand: npm start -- --hostname 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
-    # Replace your-domain.com with your real domain BEFORE creating the Blueprint.
-    # Render then shows the DNS records to add at your registrar; SSL is issued automatically.
-    domains:
-      - your-domain.com
     disk:
       name: powerlink-data
       mountPath: /var/data
@@ -25,9 +21,5 @@ services:
         value: production
       - key: LINK_DATA_DIR
         value: /var/data/links
-      # Must match the custom domain above, including https:// and no trailing slash.
-      # Without this, link creation from the custom domain returns 403 (origin mismatch).
-      - key: APP_ORIGIN
-        value: https://your-domain.com
       - key: CREATE_ACCESS_TOKEN
         generateValue: true
