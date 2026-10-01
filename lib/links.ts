@@ -18,9 +18,12 @@ export class LinkError extends Error {
   constructor(code: string, status = 400) { super(code); this.code = code; this.status = status; }
 }
 
-// Storage backend: Postgres when DATABASE_URL is set (serverless/diskless hosts),
-// otherwise the local filesystem (development and tests).
-const usingPostgres = () => Boolean(process.env.DATABASE_URL);
+// Storage backend: Postgres when a connection string is present (serverless/
+// diskless hosts), otherwise the local filesystem (development and tests).
+// POSTGRES_URL is the name Vercel's Neon integration injects; DATABASE_URL is
+// the generic name used by Render and most other providers.
+const dbUrl = () => process.env.DATABASE_URL || process.env.POSTGRES_URL || "";
+const usingPostgres = () => Boolean(dbUrl());
 
 type Pool = import("pg").Pool;
 let poolPromise: Promise<Pool> | null = null;
@@ -29,7 +32,7 @@ let schemaPromise: Promise<void> | null = null;
 function getPool(): Promise<Pool> {
   if (!poolPromise) {
     poolPromise = import("pg").then(({ Pool }) => new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: dbUrl(),
       ssl: { rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false" },
       max: Number(process.env.DATABASE_POOL_MAX) || 5,
     }));
